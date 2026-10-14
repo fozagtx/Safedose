@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Ink;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../client.dart';
+import '../theme.dart';
+import '../widgets/brand_mark.dart';
+import '../widgets/safety_footer.dart';
 
 class SignInScreen extends StatefulWidget {
   final Widget child;
@@ -35,43 +38,70 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    if (_isSignedIn) return widget.child;
 
-    return _isSignedIn
-        ? widget.child
-        : Center(
-            child: SignInWidget(
-              client: client,
-              onAuthenticated: () {
-                context.showSnackBar(
-                  message: 'User authenticated.',
-                  backgroundColor: colors.primaryContainer,
-                  foregroundColor: colors.onPrimaryContainer,
-                );
-              },
-              onError: (error) {
-                context.showSnackBar(
-                  message: 'Authentication failed: $error',
-                  backgroundColor: colors.errorContainer,
-                  foregroundColor: colors.onErrorContainer,
-                );
-              },
+    final text = Theme.of(context).textTheme;
+    return Scaffold(
+      bottomNavigationBar: const SafetyFooter(),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const BrandMark(),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Every dose, once.',
+                    style: text.headlineLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'A shared dose log for everyone who looks after '
+                    'one child.',
+                    style: TextStyle(fontSize: 16, color: Ink.muted),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Ink.line),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.all(24),
+                    child: SignInWidget(
+                      client: client,
+                      onAuthenticated: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('User authenticated.'),
+                            duration: Duration(seconds: 5),
+                          ),
+                        );
+                      },
+                      onError: (error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Authentication failed: $error',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            backgroundColor: Lights.red,
+                            duration: const Duration(seconds: 5),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-  }
-}
-
-extension on BuildContext {
-  void showSnackBar({
-    required String message,
-    required Color backgroundColor,
-    required Color foregroundColor,
-  }) {
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(color: foregroundColor)),
-        backgroundColor: backgroundColor,
-        duration: const Duration(seconds: 5),
+          ),
+        ),
       ),
     );
   }

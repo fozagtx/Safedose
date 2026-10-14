@@ -1,78 +1,110 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Ink;
 import 'package:onedose_client/onedose_client.dart';
 
 import '../client.dart';
 import '../theme.dart';
+import '../widgets/app_shell.dart';
+import '../widgets/page_header.dart';
 
 /// The audit trail, accepted and refused. Sitters see their shift only.
-class HistoryScreen extends StatefulWidget {
+class HistoryView extends StatefulWidget {
   final CircleSummary circle;
-  const HistoryScreen({super.key, required this.circle});
+  const HistoryView({super.key, required this.circle});
 
   @override
-  State<HistoryScreen> createState() => _HistoryScreenState();
+  State<HistoryView> createState() => _HistoryViewState();
 }
 
-class _HistoryScreenState extends State<HistoryScreen> {
+class _HistoryViewState extends State<HistoryView> {
   late Future<List<DoseEvent>> _events = _load();
 
   Future<List<DoseEvent>> _load() =>
       client.history.list(widget.circle.child.id!);
 
+  Future<void> _reload() async {
+    setState(() => _events = _load());
+    await _events;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('History')),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          setState(() => _events = _load());
-          await _events;
-        },
-        child: FutureBuilder<List<DoseEvent>>(
-          future: _events,
-          builder: (context, snap) {
-            if (snap.hasError) {
-              return ListView(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(errorText(snap.error!)),
+    final sitter = widget.circle.me.role == CareRole.sitter;
+    return RefreshIndicator(
+      onRefresh: _reload,
+      child: ListView(
+        padding: AppShell.pagePadding(context),
+        children: [
+          PageHeader(
+            title: 'History',
+            subtitle:
+                'Every dose given or refused, newest first.'
+                '${sitter ? ' You see your shift only.' : ''}',
+            actions: [
+              OutlinedButton.icon(
+                onPressed: _reload,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Refresh'),
+              ),
+            ],
+          ),
+          FutureBuilder<List<DoseEvent>>(
+            future: _events,
+            builder: (context, snap) {
+              if (snap.hasError) {
+                return Text(
+                  errorText(snap.error!),
+                  style: const TextStyle(color: Ink.muted),
+                );
+              }
+              if (!snap.hasData) {
+                return const Padding(
+                  padding: EdgeInsets.all(48),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final events = snap.data!;
+              if (events.isEmpty) {
+                return Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Ink.line),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              );
-            }
-            if (!snap.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final events = snap.data!;
-            if (events.isEmpty) {
-              return ListView(
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'Nothing logged yet.',
-                      textAlign: TextAlign.center,
-                    ),
+                  padding: const EdgeInsets.all(32),
+                  child: const Text(
+                    'Nothing logged yet.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Ink.muted),
                   ),
-                ],
+                );
+              }
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Ink.line),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < events.length; i++) ...[
+                        if (i > 0) const Divider(),
+                        _EventRow(events[i]),
+                      ],
+                    ],
+                  ),
+                ),
               );
-            }
-            return ListView.separated(
-              itemCount: events.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (_, i) => _EventTile(events[i]),
-            );
-          },
-        ),
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-class _EventTile extends StatelessWidget {
+class _EventRow extends StatelessWidget {
   final DoseEvent e;
-  const _EventTile(this.e);
+  const _EventRow(this.e);
 
   @override
   Widget build(BuildContext context) {
@@ -88,14 +120,46 @@ class _EventTile extends StatelessWidget {
       DoseOutcome.refusedDailyMax => (Icons.block, Lights.red, 'Refused'),
       DoseOutcome.undone => (Icons.undo, Lights.unknown, 'Undo'),
     };
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text('$label · ${e.medicineName} ${e.doseText}'),
-      subtitle: Text(
-        '${e.caregiverName} · ${formatDateTime(e.at)}'
-        '${e.reason == null ? '' : '\n${e.reason}'}',
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$label · ${e.medicineName} ${e.doseText}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Ink.ink,
+                  ),
+                ),
+                Text(
+                  '${e.caregiverName} · ${formatDateTime(e.at)}',
+                  style: const TextStyle(fontSize: 13, color: Ink.muted),
+                ),
+                if (e.reason != null)
+                  Text(
+                    e.reason!,
+                    style: const TextStyle(fontSize: 13, color: Ink.ink),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
-      isThreeLine: e.reason != null,
     );
   }
 }

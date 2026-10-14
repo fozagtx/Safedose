@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Ink;
 import 'package:onedose_client/onedose_client.dart';
 
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../client.dart';
 import '../theme.dart';
+import '../widgets/brand_mark.dart';
+import '../widgets/page_header.dart';
 import '../widgets/safety_footer.dart';
 import 'circle_screen.dart';
 
@@ -55,13 +57,20 @@ class _HomeGateState extends State<HomeGate> {
       future: _circles,
       builder: (context, snap) {
         if (snap.hasError) {
-          return _Message(
-            text: errorText(snap.error!),
-            action: FilledButton(onPressed: _load, child: const Text('Retry')),
+          return Scaffold(
+            body: _Message(
+              text: errorText(snap.error!),
+              action: FilledButton(
+                onPressed: _load,
+                child: const Text('Retry'),
+              ),
+            ),
           );
         }
         if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         final circles = snap.data!;
         if (circles.isEmpty) return SetupScreen(onDone: _load);
@@ -92,7 +101,11 @@ class _Message extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(text, textAlign: TextAlign.center),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Ink.muted),
+          ),
           if (action != null) ...[const SizedBox(height: 16), action!],
         ],
       ),
@@ -131,101 +144,158 @@ class _SetupScreenState extends State<SetupScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _setupCard({
+    required String title,
+    required String caption,
+    required List<Widget> fields,
+    required Widget button,
+  }) {
     final text = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('OneDose'),
-        actions: [
-          IconButton(
-            tooltip: 'Sign out',
-            icon: const Icon(Icons.logout),
-            onPressed: () => client.auth.signOutDevice(),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Ink.line),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: text.titleLarge),
+          const SizedBox(height: 6),
+          Text(
+            caption,
+            style: const TextStyle(fontSize: 14, color: Ink.muted),
           ),
+          const SizedBox(height: 20),
+          for (var i = 0; i < fields.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            fields[i],
+          ],
+          const SizedBox(height: 20),
+          button,
         ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 720;
+    final parentCard = _setupCard(
+      title: 'I\'m the parent',
+      caption: 'Set up your child and invite the people who help.',
+      fields: [
+        TextField(
+          controller: _childName,
+          decoration: const InputDecoration(labelText: 'Child\'s name'),
+        ),
+        TextField(
+          controller: _ownerName,
+          decoration: const InputDecoration(
+            labelText: 'Your name in the circle',
+            helperText: 'Shown to others, e.g. "Mum"',
+          ),
+        ),
+      ],
+      button: FilledButton(
+        onPressed: _busy
+            ? null
+            : () => _run(
+                () => client.child.create(
+                  name: _childName.text,
+                  ownerName: _ownerName.text,
+                  utcOffsetMinutes: DateTime.now().timeZoneOffset.inMinutes,
+                ),
+              ),
+        child: const Text('Set up my child'),
+      ),
+    );
+    final inviteCard = _setupCard(
+      title: 'I was sent an invite',
+      caption: 'Enter the code the parent sent you.',
+      fields: [
+        TextField(
+          controller: _code,
+          textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(labelText: 'Invite code'),
+        ),
+      ],
+      button: OutlinedButton(
+        onPressed: _busy
+            ? null
+            : () => _run(() => client.invite.accept(_code.text)),
+        child: const Text('Join'),
+      ),
+    );
+
+    return Scaffold(
       bottomNavigationBar: const SafetyFooter(),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          Text('Every dose, once.', style: text.headlineSmall),
-          const SizedBox(height: 8),
-          const Text(
-            'Everyone who looks after your child logs doses here. The '
-            'server refuses a second dose before anyone can give it.',
+          SafeArea(
+            bottom: false,
+            child: SizedBox(
+              height: 67,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    const BrandMark(),
+                    const Spacer(),
+                    OutlinedButton(
+                      onPressed: () => client.auth.signOutDevice(),
+                      child: const Text('Sign out'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('I\'m the parent', style: text.titleMedium),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _childName,
-                    decoration: const InputDecoration(
-                      labelText: 'Child\'s name',
-                    ),
-                  ),
-                  TextField(
-                    controller: _ownerName,
-                    decoration: const InputDecoration(
-                      labelText: 'Your name in the circle',
-                      helperText: 'Shown to others, e.g. "Mum"',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: _busy
-                        ? null
-                        : () => _run(
-                            () => client.child.create(
-                              name: _childName.text,
-                              ownerName: _ownerName.text,
-                              utcOffsetMinutes:
-                                  DateTime.now().timeZoneOffset.inMinutes,
-                            ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 960),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const PageHeader(
+                          title: 'Every dose, once.',
+                          subtitle:
+                              'Everyone who looks after your child logs '
+                              'doses here. The server refuses a second dose '
+                              'before anyone can give it.',
+                        ),
+                        if (wide)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: parentCard),
+                              const SizedBox(width: 20),
+                              Expanded(child: inviteCard),
+                            ],
+                          )
+                        else ...[
+                          parentCard,
+                          const SizedBox(height: 20),
+                          inviteCard,
+                        ],
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _error!,
+                            style: const TextStyle(color: Lights.red),
                           ),
-                    child: const Text('Set up my child'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('I was sent an invite', style: text.titleMedium),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _code,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(
-                      labelText: 'Invite code',
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: _busy
-                        ? null
-                        : () => _run(() => client.invite.accept(_code.text)),
-                    child: const Text('Join'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(color: Lights.red)),
-          ],
         ],
       ),
     );

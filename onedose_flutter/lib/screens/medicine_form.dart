@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Ink;
 import 'package:onedose_client/onedose_client.dart';
 
 import '../client.dart';
 import '../theme.dart';
+import '../widgets/page_header.dart';
 
 /// Owner only. Every value is copied from the label or the doctor; the app
 /// never suggests one.
@@ -85,11 +86,26 @@ class _MedicineFormState extends State<MedicineForm> {
 
   @override
   Widget build(BuildContext context) {
+    final editing = widget.medicine != null;
+    final wide = MediaQuery.sizeOf(context).width >= 480;
+    final hoursField = TextField(
+      controller: _hours,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: const InputDecoration(
+        labelText: 'Minimum hours between doses',
+      ),
+    );
+    final maxField = TextField(
+      controller: _max,
+      keyboardType: TextInputType.number,
+      decoration: const InputDecoration(
+        labelText: 'Maximum doses in 24 hours',
+      ),
+    );
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.medicine == null ? 'Add medicine' : 'Edit medicine'),
         actions: [
-          if (widget.medicine != null)
+          if (editing)
             IconButton(
               tooltip: 'Remove from card',
               icon: const Icon(Icons.delete_outline),
@@ -98,65 +114,91 @@ class _MedicineFormState extends State<MedicineForm> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         children: [
-          Card(
-            color: Theme.of(context).colorScheme.secondaryContainer,
-            child: const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text(
-                'Copy every value from the label or from the doctor. '
-                'OneDose never suggests a dose.',
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PageHeader(
+                    title: editing ? 'Edit ${_name.text}' : 'Add medicine',
+                    subtitle:
+                        'Copy every value from the label or from the '
+                        'doctor. OneDose never suggests a dose.',
+                  ),
+                  TextField(
+                    controller: _name,
+                    decoration: const InputDecoration(
+                      labelText: 'Name, e.g. Calpol',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _ingredient,
+                    decoration: const InputDecoration(
+                      labelText: 'Active ingredient, e.g. paracetamol',
+                      helperText:
+                          'Medicines with the same ingredient share one '
+                          'lockout.',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _dose,
+                    decoration: const InputDecoration(
+                      labelText: 'Dose, e.g. 5 ml',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  if (wide)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: hoursField),
+                        const SizedBox(width: 12),
+                        Expanded(child: maxField),
+                      ],
+                    )
+                  else ...[
+                    hoursField,
+                    const SizedBox(height: 14),
+                    maxField,
+                  ],
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _times,
+                    decoration: const InputDecoration(
+                      labelText: 'Fixed times (optional)',
+                      helperText:
+                          'e.g. 08:00, 20:00 for an antibiotic. Missed '
+                          'doses are escalated.',
+                    ),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 14),
+                    Text(_error!, style: const TextStyle(color: Lights.red)),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: _busy ? null : _save,
+                      child: _busy
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Save'),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          TextField(
-            controller: _name,
-            decoration: const InputDecoration(labelText: 'Name, e.g. Calpol'),
-          ),
-          TextField(
-            controller: _ingredient,
-            decoration: const InputDecoration(
-              labelText: 'Active ingredient, e.g. paracetamol',
-              helperText:
-                  'Medicines with the same ingredient share one lockout.',
-            ),
-          ),
-          TextField(
-            controller: _dose,
-            decoration: const InputDecoration(labelText: 'Dose, e.g. 5 ml'),
-          ),
-          TextField(
-            controller: _hours,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Minimum hours between doses',
-            ),
-          ),
-          TextField(
-            controller: _max,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Maximum doses in 24 hours',
-            ),
-          ),
-          TextField(
-            controller: _times,
-            decoration: const InputDecoration(
-              labelText: 'Fixed times (optional)',
-              helperText:
-                  'e.g. 08:00, 20:00 for an antibiotic. Missed '
-                  'doses are escalated.',
-            ),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Lights.red)),
-          ],
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _busy ? null : _save,
-            child: const Text('Save'),
           ),
         ],
       ),

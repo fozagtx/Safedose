@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Ink;
 
 import 'client.dart';
 import 'screens/home_gate.dart';
@@ -19,12 +19,9 @@ class OneDoseApp extends StatelessWidget {
     return MaterialApp(
       title: 'OneDose',
       debugShowCheckedModeBanner: false,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
-      themeMode: ThemeMode.system,
-      home: const Scaffold(
-        body: SignInScreen(child: HomeGate()),
-      ),
+      theme: buildTheme(),
+      themeMode: ThemeMode.light,
+      home: const SignInScreen(child: HomeGate()),
     );
   }
 }

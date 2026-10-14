@@ -1,15 +1,56 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Ink;
 import 'package:url_launcher/url_launcher.dart';
+
+import '../theme.dart';
 
 /// Shown on every screen: OneDose is a log, not medical advice.
 class SafetyFooter extends StatelessWidget {
-  const SafetyFooter({super.key});
+  final bool _sidebar;
+  const SafetyFooter({super.key}) : _sidebar = false;
+  const SafetyFooter.sidebar({super.key}) : _sidebar = true;
 
   static final _poisonHelp = Uri.parse('https://www.poison.org/');
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodySmall;
+    if (_sidebar) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Material(
+            color: Ink.soft,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () => launchUrl(_poisonHelp),
+              borderRadius: BorderRadius.circular(12),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Poison control',
+                        style: TextStyle(fontSize: 14, color: Ink.ink),
+                      ),
+                    ),
+                    Icon(Icons.open_in_new, size: 16, color: Ink.muted),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'A shared log, not medical advice.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: Ink.faint),
+          ),
+        ],
+      );
+    }
     return SafeArea(
       top: false,
       child: Padding(
@@ -18,18 +59,20 @@ class SafetyFooter extends StatelessWidget {
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text(
+            const Text(
               'OneDose is a shared log, not medical advice. '
               'Too much given? ',
-              style: style,
+              style: TextStyle(fontSize: 12, color: Ink.faint),
             ),
             InkWell(
               onTap: () => launchUrl(_poisonHelp),
-              child: Text(
+              child: const Text(
                 'Poison control guidance',
-                style: style?.copyWith(
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Ink.muted,
                   decoration: TextDecoration.underline,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
