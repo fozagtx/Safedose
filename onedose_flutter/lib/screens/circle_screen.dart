@@ -445,6 +445,8 @@ class _CircleScreenState extends State<CircleScreen> {
                     tooltip: 'Add medicine',
                     onPressed: () => _open(MedicineForm(childId: child.id!)),
                     style: IconButton.styleFrom(
+                      backgroundColor: Ink.ink,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
