@@ -1,0 +1,10 @@
+### A child at the centre of one care circle.
+class: Child
+table: child
+fields:
+  name: String
+  photoUrl: String?
+  ownerId: UuidValue
+  ### Offset from UTC of the family's local time, used for fixed dose times
+  ### and for the times written into refusal messages.
+  utcOffsetMinutes: int, default=0

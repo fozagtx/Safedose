@@ -1,0 +1,4 @@
+class: InviteCreated
+fields:
+  token: String
+  invite: Invite

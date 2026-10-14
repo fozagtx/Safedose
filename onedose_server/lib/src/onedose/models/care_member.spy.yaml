@@ -1,0 +1,15 @@
+### A person who can see and log doses for a child.
+class: CareMember
+table: care_member
+fields:
+  childId: int
+  userId: UuidValue
+  displayName: String
+  role: CareRole
+  ### Only set for sitters: access is valid in [shiftStart, shiftEnd).
+  shiftStart: DateTime?
+  shiftEnd: DateTime?
+  revokedAt: DateTime?
+indexes:
+  care_member_child_user_idx:
+    fields: childId, userId

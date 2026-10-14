@@ -1,0 +1,5 @@
+enum: StatusLight
+values:
+  - green
+  - amber
+  - red

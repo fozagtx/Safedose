@@ -1,0 +1,5 @@
+### A child as seen by the signed-in caregiver.
+class: CircleSummary
+fields:
+  child: Child
+  me: CareMember

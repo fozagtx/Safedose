@@ -1,0 +1,11 @@
+### "Can I give this now?" for one medicine.
+class: MedicineStatus
+fields:
+  medicine: Medicine
+  light: StatusLight
+  message: String
+  lastGivenAt: DateTime?
+  lastGivenBy: String?
+  nextAllowedAt: DateTime?
+  dosesLast24h: int
+  maxPer24h: int

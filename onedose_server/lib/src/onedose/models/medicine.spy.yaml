@@ -1,0 +1,17 @@
+### A medicine and its limits, copied by the owner from the label or doctor.
+class: Medicine
+table: medicine
+fields:
+  childId: int
+  name: String
+  ### Active ingredient, normalised to lower case. Lockouts are keyed on it.
+  ingredient: String
+  doseText: String
+  minHoursBetween: double
+  maxPer24h: int
+  ### Local fixed times as "HH:mm", e.g. ["08:00", "20:00"].
+  fixedTimes: List<String>
+  archivedAt: DateTime?
+indexes:
+  medicine_child_idx:
+    fields: childId

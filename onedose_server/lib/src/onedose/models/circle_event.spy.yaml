@@ -1,0 +1,11 @@
+### One message on a child's live stream.
+class: CircleEvent
+fields:
+  type: CircleEventType
+  childId: int
+  message: String?
+  event: DoseEvent?
+  statuses: List<MedicineStatus>?
+  ### When set, only this user is shown the event.
+  targetUserId: UuidValue?
+  at: DateTime

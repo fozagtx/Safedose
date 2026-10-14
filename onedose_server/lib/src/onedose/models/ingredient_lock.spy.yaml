@@ -1,0 +1,12 @@
+### The single row locked while a dose of an ingredient is checked.
+class: IngredientLock
+table: ingredient_lock
+fields:
+  childId: int
+  ingredient: String
+  lastGivenAt: DateTime?
+  lastGivenBy: String?
+indexes:
+  ingredient_lock_child_ingredient_idx:
+    fields: childId, ingredient
+    unique: true

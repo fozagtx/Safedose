@@ -1,0 +1,6 @@
+enum: OneDoseErrorCode
+values:
+  - notAuthorized
+  - notFound
+  - invalid
+  - shiftEnded

@@ -1,0 +1,93 @@
+# Production configuration for OneDose.
+# Every value here can be overridden with environment variables, e.g.
+# SERVERPOD_DATABASE_HOST, SERVERPOD_API_SERVER_PUBLIC_HOST. Secrets are passed
+# as SERVERPOD_PASSWORD_<key> (see .env.production.example at the repo root).
+# On Serverpod Cloud the database and public hosts are provided for you.
+
+# This is the configuration file for your production environment.
+# Typically, you will want to route the traffic through a load balancer
+# which adds SSL security through https. If you use Serverpod's standard
+# Terraform scripts to deploy your server, all you need to change in
+# this file is the examplepod.com domain name.
+
+# Configuration for the main API server.
+apiServer:
+  port: 8080
+  publicHost: api.onedose.example.com
+  publicPort: 443
+  publicScheme: https
+
+# Configuration for the Insights server.
+insightsServer:
+  port: 8081
+  publicHost: insights.onedose.example.com
+  publicPort: 443
+  publicScheme: https
+
+# Configuration for the web server.
+webServer:
+  port: 8082
+  publicHost: onedose.example.com
+  publicPort: 443
+  publicScheme: https
+
+# This is the database setup for your servers. The default for the Google Cloud
+# Engine Terraform configuration is to connect on a private IP address.
+# If you are connecting on a public IP (e.g. on AWS or Google Cloud Run), you
+# connect on the public IP of the database e.g. database.examplepod.com.
+database:
+  host: postgres
+  port: 5432
+  name: onedose
+  user: postgres
+  requireSsl: true
+  #isUnixSocket: true # defaults to false
+  #maxConnectionCount: 10 # Defaults to 10, a negative or null value removes the limit
+
+# This is the setup for Redis. The default for the Google Cloud Engine Terraform
+# configuration is to connect on a private IP address.
+# If you are connecting on a public IP (e.g. on AWS or Google Cloud Run), you
+# connect on the public IP of the database e.g. redis.examplepod.com.
+redis:
+  enabled: false
+  host: redis
+  port: 6379
+  #user: # defaults to empty
+  #requireSsl: true # defaults to false
+
+maxRequestSize: 524288 # The maximum size of requests allowed in bytes
+
+sessionLogs:
+  consoleEnabled: false
+# persistentEnabled: true
+# consoleLogFormat: json # Defaults to "json", options are "text" or "json"
+
+#futureCall:
+#  enabled: true # Defaults to true, set to false to disable scheduling and running future calls
+#  executionEnabled: true # Defaults to true
+#  concurrencyLimit: 1 # Defaults to 1, a negative or null value removes the limit
+#  scanInterval: 5000 # Unit in milliseconds, defaults to 5000
+
+# Recommended when serving web clients: keeps auth tokens in httpOnly
+# cookies. Without this, web tokens live in JavaScript-readable storage,
+# where any XSS can steal them. Web clients opt in with
+# `client.cookieAuth = true`. Requires `allowedOrigins`; browsers from
+# origins not in the list lose cross-origin access, including to public
+# endpoints.
+#authCookie:
+#  sameSite: lax # Defaults to "lax", options are "strict" or "none"
+#  #name: serverpod_auth # Defaults to "serverpod_auth"
+#  #refreshName: serverpod_auth_refresh # Defaults to "<name>_refresh"
+#  #domain: examplepod.com # Defaults to host-only; set to share across subdomains
+#  #path: / # Defaults to "/"
+#  #secure: true # Defaults to true; the cookie is only sent over https
+#allowedOrigins:
+#  - https://onedose.example.com # The origin serving your Flutter web app
+
+# Escalations and shift expiry are future calls. Scan often so a missed dose
+# alert lands within seconds of its time.
+futureCall:
+  enabled: true
+  executionEnabled: true
+  concurrencyLimit: 5
+  scanInterval: 2000

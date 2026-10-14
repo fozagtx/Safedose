@@ -1,0 +1,10 @@
+### What the server decided about one tap on "Give dose".
+class: DoseResult
+fields:
+  accepted: bool
+  outcome: DoseOutcome
+  message: String
+  givenBy: String?
+  givenAt: DateTime?
+  nextAllowedAt: DateTime?
+  event: DoseEvent

@@ -1,0 +1,16 @@
+### A one-time link that adds a sitter (or co-parent) to a circle.
+class: Invite
+table: invite
+fields:
+  token: String
+  childId: int
+  displayName: String
+  role: CareRole
+  shiftStart: DateTime?
+  shiftEnd: DateTime?
+  usedAt: DateTime?
+  createdAt: DateTime
+indexes:
+  invite_token_idx:
+    fields: token
+    unique: true

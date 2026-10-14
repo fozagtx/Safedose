@@ -1,0 +1,35 @@
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+child:
+  - mine:
+  - create:
+  - update:
+  - demoMode:
+circle:
+  - watch:
+  - members:
+  - revoke:
+dose:
+  - logDose:
+  - overrideDose:
+  - undo:
+  - status:
+history:
+  - list:
+invite:
+  - create:
+  - accept:
+medicine:
+  - list:
+  - add:
+  - update:
+  - archive:

@@ -1,0 +1,4 @@
+exception: OneDoseException
+fields:
+  code: OneDoseErrorCode
+  message: String

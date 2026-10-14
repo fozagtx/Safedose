@@ -1,0 +1,22 @@
+### Every dose attempt, accepted or refused. Never deleted.
+class: DoseEvent
+table: dose_event
+fields:
+  childId: int
+  medicineId: int
+  medicineName: String
+  ingredient: String
+  doseText: String
+  caregiverId: UuidValue
+  caregiverName: String
+  at: DateTime
+  outcome: DoseOutcome
+  reason: String?
+  nextAllowedAt: DateTime?
+  ### Set on an accepted dose that was later undone.
+  undoneAt: DateTime?
+indexes:
+  dose_event_child_at_idx:
+    fields: childId, at
+  dose_event_child_ingredient_idx:
+    fields: childId, ingredient

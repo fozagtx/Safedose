@@ -1,0 +1,60 @@
+# Self-hosted production stack: Postgres + the OneDose server (API, web app).
+#
+#   cp .env.production.example .env.production   # fill in secrets
+#   ./scripts/build_web.sh                       # bundle the Flutter web app
+#   docker compose -f docker-compose.production.yaml --env-file .env.production up -d --build
+#
+# Migrations are applied on start (--apply-migrations). Put a TLS-terminating
+# proxy (Caddy, nginx, a cloud load balancer) in front of ports 8080 and 8082.
+services:
+  postgres:
+    image: postgres:16.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: onedose
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    volumes:
+      - onedose_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d onedose"]
+      interval: 5s
+      retries: 10
+
+  server:
+    build:
+      context: .
+      dockerfile: onedose_server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080" # API (and the live streams)
+      - "8081:8081" # Insights
+      - "8082:8082" # Web app
+    entrypoint:
+      - /bin/sh
+      - -c
+      - ./bin/server --mode=production --server-id=default --logging=normal --role=monolith --apply-migrations
+    environment:
+      SERVERPOD_DATABASE_HOST: postgres
+      SERVERPOD_DATABASE_PORT: "5432"
+      SERVERPOD_DATABASE_NAME: onedose
+      SERVERPOD_DATABASE_USER: postgres
+      SERVERPOD_DATABASE_REQUIRE_SSL: "false"
+      SERVERPOD_API_SERVER_PUBLIC_HOST: ${API_HOST:?set API_HOST}
+      SERVERPOD_WEB_SERVER_PUBLIC_HOST: ${WEB_HOST:?set WEB_HOST}
+      SERVERPOD_INSIGHTS_SERVER_PUBLIC_HOST: ${INSIGHTS_HOST:-localhost}
+      SERVERPOD_PASSWORD_database: ${DB_PASSWORD}
+      SERVERPOD_PASSWORD_serviceSecret: ${SERVICE_SECRET:?set SERVICE_SECRET}
+      SERVERPOD_PASSWORD_emailSecretHashPepper: ${EMAIL_PEPPER:?set EMAIL_PEPPER}
+      SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey: ${JWT_KEY:?set JWT_KEY}
+      SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper: ${JWT_REFRESH_PEPPER:?set JWT_REFRESH_PEPPER}
+      # Only needed self-hosted: Serverpod Cloud provides it automatically.
+      SERVERPOD_PASSWORD_scloudAuthEmailKey: ${SCLOUD_EMAIL_KEY:-}
+      # "true" shortens escalation stages to 1 and 2 minutes for the demo.
+      ONEDOSE_DEMO: ${ONEDOSE_DEMO:-false}
+
+volumes:
+  onedose_db:

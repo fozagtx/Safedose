@@ -1,0 +1,10 @@
+enum: CircleEventType
+values:
+  - snapshot
+  - doseAccepted
+  - doseRefused
+  - doseUndone
+  - medicinesChanged
+  - membersChanged
+  - alert
+  - shiftEnded
