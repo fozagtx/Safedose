@@ -435,11 +435,22 @@ class _CircleScreenState extends State<CircleScreen> {
           ),
       ],
       primaryAction: _isOwner
-          ? FilledButton.icon(
-              onPressed: () => _open(MedicineForm(childId: child.id!)),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add medicine'),
-            )
+          ? AppShell.isWide(context)
+                ? FilledButton.icon(
+                    onPressed: () => _open(MedicineForm(childId: child.id!)),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add medicine'),
+                  )
+                : IconButton.filled(
+                    tooltip: 'Add medicine',
+                    onPressed: () => _open(MedicineForm(childId: child.id!)),
+                    style: IconButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: const Icon(Icons.add, size: 18),
+                  )
           : null,
       body: switch (_section) {
         1 => HistoryView(circle: widget.circle),
